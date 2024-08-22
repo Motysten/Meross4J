@@ -10,13 +10,11 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
-import java.util.Objects;
 import java.util.UUID;
 
 public class Utils {
 
     public static String generatePass(String userId, String key) throws NoSuchAlgorithmException {
-        System.out.println("Clear : " + userId + key);
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(Bytes.concat(userId.getBytes(), key.getBytes()));
         return DatatypeConverter.printHexBinary(md.digest()).toLowerCase();
@@ -59,8 +57,6 @@ public class Utils {
         HashMap<String, String> returnValue = new HashMap<>();
         returnValue.put("messageId", messageId);
         returnValue.put("message", data.toString());
-
-        System.out.println(data);
 
         return returnValue;
     }

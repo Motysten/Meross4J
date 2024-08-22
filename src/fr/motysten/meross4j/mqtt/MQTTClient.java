@@ -1,7 +1,10 @@
 package fr.motysten.meross4j.mqtt;
 
 import fr.motysten.meross4j.HttpApi;
+import fr.motysten.meross4j.Main;
+import fr.motysten.meross4j.devices.Plug;
 import org.eclipse.paho.client.mqttv3.*;
+import org.json.JSONObject;
 
 import java.security.NoSuchAlgorithmException;
 
@@ -39,9 +42,19 @@ public class MQTTClient {
             }
 
             @Override
-            public void messageArrived(String topic, MqttMessage mqttMessage) throws Exception {
-                System.out.println("Topic : " + topic);
-                System.out.println("Message : " + mqttMessage);
+            public void messageArrived(String topic, MqttMessage mqttMessage) {
+                if (topic.contains("-")) {
+                    JSONObject header = new JSONObject(mqttMessage.toString()).getJSONObject("header");
+                    JSONObject payload = new JSONObject(mqttMessage.toString()).getJSONObject("payload");
+                    if (Main.devices.get(header.getString("uuid")) instanceof Plug device) {
+                        if (device.isPowerCapable()) {
+                            device.setPowerUsage(payload.getJSONObject("electricity").getFloat("power") / 1000);
+                        }
+                        device.latch.countDown();
+                    }
+                } else {
+                    System.out.println(mqttMessage);
+                }
             }
 
             @Override

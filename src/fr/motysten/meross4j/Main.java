@@ -1,10 +1,8 @@
 package fr.motysten.meross4j;
 
-import fr.motysten.meross4j.models.Namespace;
+import fr.motysten.meross4j.devices.Plug;
 import fr.motysten.meross4j.mqtt.MQTTClient;
-import fr.motysten.meross4j.mqtt.Utils;
 import org.eclipse.paho.client.mqttv3.MqttException;
-import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -16,7 +14,7 @@ import java.util.HashMap;
 
 public class Main {
 
-    public static String mqttPass;
+    public static HashMap<String, Object> devices = new HashMap<>();
 
     public static void main(String[] args) throws NoSuchAlgorithmException, IOException, InterruptedException, MqttException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
@@ -27,40 +25,33 @@ public class Main {
         System.out.println("Password : ");
         String password = reader.readLine();
 
+        System.out.println();
+
         HttpApi api = new HttpApi(email, password);
-
-        JSONArray devices = api.listDevices();
-        for (Object object : devices) {
-            JSONObject device = (JSONObject) object;
-            System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ")");
-        }
-
-        //mqttPass = Utils.generatePass("386602", "411ecdc64a856c84d6ef1401046a07bd");
-        // api.destroy();
 
         MQTTClient client = new MQTTClient(api);
         client.initCallback();
 
-        System.out.println(client.getClient().isConnected());
+        JSONArray devicesList = api.listDevices();
+        for (Object object : devicesList) {
+            JSONObject device = (JSONObject) object;
+            if (device.getString("deviceType").equalsIgnoreCase("mss310")) {
+                devices.put(device.getString("uuid"), new Plug(device.getString("uuid"), device.getString("devName"), device.getString("fmwareVersion"), device.getString("deviceType"), api, client));
+            }
+            System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ")");
+        }
 
-        JSONObject togglex = new JSONObject();
-        togglex.put("channel", 0);
+        Plug plug = (Plug) devices.get("2303165514246051200348e1e9bfae29");
+        plug.sync();
+        System.out.println("Current power consumption : " + plug.getPowerUsage() + "W");
 
-        JSONObject payload = new JSONObject();
-        payload.put("togglex", togglex);
-
-        HashMap<String, String> messageInfos = Utils.buildMessage("GET", Namespace.CONTROL_ELECTRICITY, payload, devices.getJSONObject(0).getString("uuid"), api, client);
-
-        System.out.println("Sending message to topic : " + new MqttMessage(messageInfos.get("message").getBytes()));
-        client.getClient().publish(Utils.buildDeviceRequestTopic(devices.getJSONObject(0).getString("uuid")), new MqttMessage(messageInfos.get("message").getBytes()));
-        System.out.println("Published !");
-
-        System.out.println();
         new Thread(() -> {
             try {
                 Thread.sleep(10000);
                 api.destroy();
-            } catch (InterruptedException | NoSuchAlgorithmException | IOException e) {
+                client.getClient().disconnect();
+                System.out.println("API connection revoked !");
+            } catch (InterruptedException | NoSuchAlgorithmException | IOException | MqttException e) {
                 throw new RuntimeException(e);
             }
         }).start();

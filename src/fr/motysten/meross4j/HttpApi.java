@@ -36,8 +36,6 @@ public class HttpApi {
             token = data.getString("token");
             key = data.getString("key");
             mqttDomain = data.getString("mqttDomain");
-
-            System.out.println(response.body());
         } catch (JSONException e) {
             System.err.println("Incorrect credentials !");
             System.exit(1);
@@ -46,24 +44,19 @@ public class HttpApi {
     }
 
     public void destroy() throws NoSuchAlgorithmException, IOException, InterruptedException {
-        HttpResponse<String> response = sendRequest(Constants.LOGOUT_URL, "{}");
-        JSONObject responseJson = new JSONObject(response.body());
-
-        System.out.println(responseJson);
+        sendRequest(Constants.LOGOUT_URL, "{}");
     }
 
     public JSONArray listDevices() throws NoSuchAlgorithmException, IOException, InterruptedException {
         HttpResponse<String> response = sendRequest(Constants.DEV_LIST, "{}");
         JSONObject responseJson = new JSONObject(response.body());
 
-        System.out.println(responseJson);
         return responseJson.getJSONArray("data");
     }
 
-    public HttpResponse<String> sendRequest(String endpoint, String credentials) throws IOException, InterruptedException, NoSuchAlgorithmException {
+    public HttpResponse<String> sendRequest(String endpoint, String payload) throws IOException, InterruptedException, NoSuchAlgorithmException {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(Constants.HTTP_API + endpoint));
-        System.out.println(token);
         requestBuilder.setHeader("Authorization", "Basic " + token);
         requestBuilder.setHeader("Content-Type", "application/json");
         requestBuilder.setHeader("vender", "Meross");
@@ -71,7 +64,7 @@ public class HttpApi {
         requestBuilder.setHeader("AppLanguage", "FR");
         requestBuilder.setHeader("User-Agent", "okhttp/3.6.0");
 
-        String b64Params = Base64.getEncoder().encodeToString(credentials.getBytes());
+        String b64Params = Base64.getEncoder().encodeToString(payload.getBytes());
         String timestamp = String.valueOf(System.currentTimeMillis());
         String nonce = RandomStringUtils.random(16, true, true).toUpperCase();
         String md5Params = getMD5(b64Params, timestamp, nonce);
