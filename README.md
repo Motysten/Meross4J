@@ -6,7 +6,7 @@ Welcome to the Java library for controlling Meross devices. This library is insp
 
 ## Features
 
-- Control Meross devices (MSS110, MSS210, MSS310, MSS310H) through a Java interface.
+- Control Meross devices (MSS110, MSS210, MSS310, MSS310H, MSL120 (limited)) through a Java interface.
 - Support for basic functionalities like turning devices on and off.
 - Simplified interface for easy integration into Java projects.
 
@@ -122,6 +122,7 @@ Currently, the library supports the following devices:
 - MSS210
 - MSS310
 - MSS310H
+- MSL120
 
 Future updates may include support for additional Meross devices.
 
