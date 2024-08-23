@@ -1,6 +1,7 @@
 package fr.motysten.meross4j;
 
 import com.google.common.primitives.Bytes;
+import fr.motysten.meross4j.devices.Light;
 import fr.motysten.meross4j.devices.Plug;
 import fr.motysten.meross4j.models.Constants;
 import fr.motysten.meross4j.mqtt.MQTTClient;
@@ -67,6 +68,9 @@ public class HttpApi {
             if (Plug.types.contains(device.getString("deviceType"))) {
                 client.devices.put(device.getString("uuid"), new Plug(device.getString("uuid"), device.getString("devName"), device.getString("fmwareVersion"), device.getString("deviceType"), this, client));
                 System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ") | New Plug device created !");
+            } else if (Light.types.contains((device.getString("deviceType")))) {
+                client.devices.put(device.getString("uuid"), new Light(device.getString("uuid"), device.getString("devName"), device.getString("fmwareVersion"), device.getString("deviceType"), this, client));
+                System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ") | New Light device created !");
             } else {
                 System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ") | This device is not supported yet. Feel free to open an issue on https://github.com/Motysten/Meross4J and I'll try to implement it as fast as possible !");
             }

@@ -31,6 +31,7 @@ public class Main {
 
         Plug plug = (Plug) client.devices.get("2303165514246051200348e1e9bfae29");
         plug.sync();
+        System.out.println(plug.isOn());
         System.out.println("Current power consumption : " + plug.getPowerUsage() + "W");
 
         api.destroy(client);

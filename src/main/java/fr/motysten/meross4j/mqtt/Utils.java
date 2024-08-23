@@ -61,8 +61,8 @@ public class Utils {
         return returnValue;
     }
 
-    public static String buildDeviceRequestTopic(String clientId) {
-        return "/appliance/" + clientId + "/subscribe";
+    public static String buildDeviceRequestTopic(String deviceId) {
+        return "/appliance/" + deviceId + "/subscribe";
     }
 
     public static String buildClientResponseTopic(String userId, String appId) {

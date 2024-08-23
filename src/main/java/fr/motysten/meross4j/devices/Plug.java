@@ -14,7 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 
-public class Plug {
+public class Plug extends BaseDevice {
 
     public static final List<String> types = Arrays.asList("mss110", "mss210", "mss310", "mss310h");
     public static final List<String> typesWithPowerMeasure = Arrays.asList("mss310", "mss310h");
@@ -27,6 +27,7 @@ public class Plug {
     private MQTTClient client;
 
     private float powerUsage;
+    private boolean on;
 
     public CountDownLatch latch;
 
@@ -47,12 +48,23 @@ public class Plug {
         JSONObject payload = new JSONObject();
 
         try{
+            HashMap<String, String> messageInfos;
+            if (isPowerCapable()) {
+                latch = new CountDownLatch(1);
+
+                messageInfos = Utils.buildMessage("GET", Namespace.CONTROL_ELECTRICITY, payload, this.id, this.api, this.client);
+                client.getClient().publish(Utils.buildDeviceRequestTopic(this.id), new MqttMessage(messageInfos.get("message").getBytes()));
+
+
+                latch.await();
+            }
             latch = new CountDownLatch(1);
 
-            HashMap<String, String> messageInfos = Utils.buildMessage("GET", Namespace.CONTROL_ELECTRICITY, payload, this.id, this.api, this.client);
+            messageInfos = Utils.buildMessage("GET", Namespace.SYSTEM_ALL, payload, this.id, this.api, this.client);
             client.getClient().publish(Utils.buildDeviceRequestTopic(this.id), new MqttMessage(messageInfos.get("message").getBytes()));
 
             latch.await();
+
         } catch (NoSuchAlgorithmException | MqttException | InterruptedException e) {
             System.err.println(e.getMessage());
         }
@@ -60,6 +72,14 @@ public class Plug {
 
     public boolean isPowerCapable() {
         return typesWithPowerMeasure.contains(this.deviceType);
+    }
+
+    public boolean isOn() {
+        return this.on;
+    }
+
+    public void setOn(boolean on) {
+        this.on = on;
     }
 
     public float getPowerUsage() {
@@ -77,25 +97,8 @@ public class Plug {
         }
     }
 
-    public boolean togglePower(boolean on) {
-        JSONObject toggleX = new JSONObject();
-        if (on) {
-            toggleX.put("channel", 1);
-        } else {
-            toggleX.put("channel", 0);
-        }
-
-        JSONObject payload = new JSONObject();
-        payload.put("togglex", toggleX);
-
-        try {
-            HashMap<String, String> messageInfos = Utils.buildMessage("SET", Namespace.CONTROL_TOGGLEX, payload, this.id, this.api, this.client);
-            client.getClient().publish(Utils.buildDeviceRequestTopic(this.id), new MqttMessage(messageInfos.get("message").getBytes()));
-            return true;
-        } catch (NoSuchAlgorithmException | MqttException e) {
-            System.err.println(e.getMessage());
-            return false;
-        }
+    public void togglePower(boolean on) {
+        super.toggleX(on, this.id, this.api, this.client);
     }
 
     public String getId() {
