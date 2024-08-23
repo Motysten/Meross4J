@@ -4,6 +4,10 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
+    <groupId>fr.motysten</groupId>
+    <artifactId>meross4j</artifactId>
+    <version>0.1.1-DEV</version>
+
     <name>${project.groupId}:${project.artifactId}</name>
     <description>
         A little library used to communicate with Meross IoT network and manage your devices.
@@ -29,10 +33,6 @@
         <developerConnection>scm:git:ssh://github.com:Motysten/Meross4J.git</developerConnection>
         <url>https://github.com/Motysten/Meross4J.git</url>
     </scm>
-
-    <groupId>fr.motysten</groupId>
-    <artifactId>meross4j</artifactId>
-    <version>0.1-DEV</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
