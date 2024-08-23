@@ -91,7 +91,7 @@ public class Main() {
 
 ### Managing devices
 
-You can also access devices informations like power consumption (only for MSS310 | MSS310H devices):
+You can also access devices information like power consumption (only for MSS310 | MSS310H devices):
 
 ```java
 import fr.motysten.meross4j.HttpApi;
