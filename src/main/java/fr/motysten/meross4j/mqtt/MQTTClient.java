@@ -34,6 +34,8 @@ public class MQTTClient {
         String[] topicFilter = {Utils.buildClientUserTopic(api.getUserId()), Utils.buildClientResponseTopic(api.getUserId(), appId)};
         int[] topicQos = {1, 1};
         client.subscribe(topicFilter, topicQos);
+
+        initCallback();
     }
 
     public void initCallback() {

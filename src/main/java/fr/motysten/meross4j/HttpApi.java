@@ -1,13 +1,15 @@
 package fr.motysten.meross4j;
 
 import com.google.common.primitives.Bytes;
+import fr.motysten.meross4j.devices.Plug;
 import fr.motysten.meross4j.models.Constants;
+import fr.motysten.meross4j.mqtt.MQTTClient;
+import jakarta.xml.bind.DatatypeConverter;
 import org.apache.commons.lang3.RandomStringUtils;
-import org.json.JSONArray;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import jakarta.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -43,15 +45,32 @@ public class HttpApi {
 
     }
 
-    public void destroy() throws NoSuchAlgorithmException, IOException, InterruptedException {
-        sendRequest(Constants.LOGOUT_URL, "{}");
+    public void destroy(MQTTClient client) {
+        new Thread(() -> {
+            try {
+                Thread.sleep(1000);
+                sendRequest(Constants.LOGOUT_URL, "{}");
+                client.getClient().disconnect();
+                System.out.println("API connection revoked !");
+            } catch (InterruptedException | NoSuchAlgorithmException | IOException | MqttException e) {
+                throw new RuntimeException(e);
+            }
+        }).start();
     }
 
-    public JSONArray listDevices() throws NoSuchAlgorithmException, IOException, InterruptedException {
+    public void listDevices(MQTTClient client) throws NoSuchAlgorithmException, IOException, InterruptedException {
         HttpResponse<String> response = sendRequest(Constants.DEV_LIST, "{}");
         JSONObject responseJson = new JSONObject(response.body());
 
-        return responseJson.getJSONArray("data");
+        for (Object object : responseJson.getJSONArray("data")) {
+            JSONObject device = (JSONObject) object;
+            if (Plug.types.contains(device.getString("deviceType"))) {
+                client.devices.put(device.getString("uuid"), new Plug(device.getString("uuid"), device.getString("devName"), device.getString("fmwareVersion"), device.getString("deviceType"), this, client));
+                System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ") | New Plug device created !");
+            } else {
+                System.out.println("Device found : " + device.getString("devName") + " (" + device.getString("deviceType") + ") | This device is not supported yet. Feel free to open an issue on https://github.com/Motysten/Meross4J and I'll try to implement it as fast as possible !");
+            }
+        }
     }
 
     public HttpResponse<String> sendRequest(String endpoint, String payload) throws IOException, InterruptedException, NoSuchAlgorithmException {
