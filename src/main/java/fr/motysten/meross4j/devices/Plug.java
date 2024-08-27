@@ -8,7 +8,6 @@ import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 import org.json.JSONObject;
 
-import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -65,7 +64,7 @@ public class Plug extends BaseDevice {
 
             latch.await();
 
-        } catch (NoSuchAlgorithmException | MqttException | InterruptedException e) {
+        } catch (MqttException | InterruptedException e) {
             System.err.println(e.getMessage());
         }
     }
