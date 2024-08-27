@@ -122,7 +122,7 @@ Currently, the library supports the following devices:
 - MSS210
 - MSS310
 - MSS310H
-- MSL120
+- MSL120 (Partial)
 
 Future updates may include support for additional Meross devices.
 
