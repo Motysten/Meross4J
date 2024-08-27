@@ -10,7 +10,17 @@ import org.json.JSONObject;
 
 import java.util.HashMap;
 
+/**
+ * Base Meross IoT Device
+ */
 public class BaseDevice {
+    /**
+     * Enable or disable a meross device using MQTT api
+     * @param on        Boolean that determine if the device need to be on (true) or off (false)
+     * @param id        The ID of the device you wish to control
+     * @param api       The instance of your HTTP connection
+     * @param client    The instance of your MQTT connection
+     */
     public void toggleX(boolean on, String id, HttpApi api, MQTTClient client) {
         JSONObject toggleX = new JSONObject();
         if (on) {

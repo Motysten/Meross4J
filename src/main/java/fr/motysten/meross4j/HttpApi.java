@@ -20,6 +20,9 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 
+/**
+ * HTTP Connection to Meross servers
+ */
 public class HttpApi {
 
     private String userId;
@@ -27,7 +30,12 @@ public class HttpApi {
     private String key;
     private String mqttDomain;
 
-    public HttpApi(String email, String password) throws NoSuchAlgorithmException, IOException, InterruptedException {
+    /**
+     * Initiate HTTP connection to Meross infrastructure
+     * @param email     User's email
+     * @param password  User's password
+     */
+    public HttpApi(String email, String password) {
         String credentials = "{\"email\":\"" + email + "\",\"password\":\"" + password + "\"}";
 
         HttpResponse<String> response = sendRequest(Constants.LOGIN_URL, credentials);
@@ -43,9 +51,12 @@ public class HttpApi {
             System.err.println("Incorrect credentials !");
             System.exit(1);
         }
-
     }
 
+    /**
+     * Method that destroy credentials to avoid being blocked by Meross
+     * @param client    Instance of your MQTT connection
+     */
     public void destroy(MQTTClient client) {
         new Thread(() -> {
             try {
@@ -53,13 +64,17 @@ public class HttpApi {
                 sendRequest(Constants.LOGOUT_URL, "{}");
                 client.getClient().disconnect();
                 System.out.println("API connection revoked !");
-            } catch (InterruptedException | NoSuchAlgorithmException | IOException | MqttException e) {
+            } catch (InterruptedException | MqttException e) {
                 throw new RuntimeException(e);
             }
         }).start();
     }
 
-    public void listDevices(MQTTClient client) throws NoSuchAlgorithmException, IOException, InterruptedException {
+    /**
+     * Method that lists all your devices and saves their instances
+     * @param client    Instance of your MQTT connection
+     */
+    public void listDevices(MQTTClient client) {
         HttpResponse<String> response = sendRequest(Constants.DEV_LIST, "{}");
         JSONObject responseJson = new JSONObject(response.body());
 
@@ -77,34 +92,53 @@ public class HttpApi {
         }
     }
 
-    public HttpResponse<String> sendRequest(String endpoint, String payload) throws IOException, InterruptedException, NoSuchAlgorithmException {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(Constants.HTTP_API + endpoint));
-        requestBuilder.setHeader("Authorization", "Basic " + token);
-        requestBuilder.setHeader("Content-Type", "application/json");
-        requestBuilder.setHeader("vender", "Meross");
-        requestBuilder.setHeader("AppVersion", "1.3.0");
-        requestBuilder.setHeader("AppLanguage", "FR");
-        requestBuilder.setHeader("User-Agent", "okhttp/3.6.0");
+    /**
+     * Method that sends a request to the HTTP api
+     * @param endpoint  Endpoint to use
+     * @param payload   JSON payload to send
+     * @return          Returns the response of the server
+     */
+    public HttpResponse<String> sendRequest(String endpoint, String payload) {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(URI.create(Constants.HTTP_API + endpoint));
+            requestBuilder.setHeader("Authorization", "Basic " + token);
+            requestBuilder.setHeader("Content-Type", "application/json");
+            requestBuilder.setHeader("vender", "Meross");
+            requestBuilder.setHeader("AppVersion", "1.3.0");
+            requestBuilder.setHeader("AppLanguage", "FR");
+            requestBuilder.setHeader("User-Agent", "okhttp/3.6.0");
 
-        String b64Params = Base64.getEncoder().encodeToString(payload.getBytes());
-        String timestamp = String.valueOf(System.currentTimeMillis());
-        String nonce = RandomStringUtils.random(16, true, true).toUpperCase();
-        String md5Params = getMD5(b64Params, timestamp, nonce);
+            String b64Params = Base64.getEncoder().encodeToString(payload.getBytes());
+            String timestamp = String.valueOf(System.currentTimeMillis());
+            String nonce = RandomStringUtils.random(16, true, true).toUpperCase();
+            String md5Params = getMD5(b64Params, timestamp, nonce);
 
-        JSONObject params = new JSONObject();
-        params.put("params", b64Params);
-        params.put("timestamp", timestamp);
-        params.put("nonce", nonce);
-        params.put("sign", md5Params);
+            JSONObject params = new JSONObject();
+            params.put("params", b64Params);
+            params.put("timestamp", timestamp);
+            params.put("nonce", nonce);
+            params.put("sign", md5Params);
 
-        requestBuilder.POST(HttpRequest.BodyPublishers.ofString(params.toString()));
-        HttpRequest request = requestBuilder.build();
+            requestBuilder.POST(HttpRequest.BodyPublishers.ofString(params.toString()));
+            HttpRequest request = requestBuilder.build();
 
-        return client.send(request, HttpResponse.BodyHandlers.ofString());
+            return client.send(request, HttpResponse.BodyHandlers.ofString());
+        } catch (IOException | InterruptedException | NoSuchAlgorithmException e) {
+            System.err.println(e.getMessage());
+        }
+        return null;
     }
 
-    public String getMD5(String params, String timestamp, String nonce) throws NoSuchAlgorithmException {
+    /**
+     *
+     * @param params
+     * @param timestamp
+     * @param nonce
+     * @return
+     * @throws NoSuchAlgorithmException
+     */
+    private String getMD5(String params, String timestamp, String nonce) throws NoSuchAlgorithmException {
         MessageDigest md = MessageDigest.getInstance("MD5");
         md.update(Bytes.concat(Constants.SECRET.getBytes(), timestamp.getBytes(), nonce.getBytes(), params.getBytes()));
         return DatatypeConverter.printHexBinary(md.digest()).toLowerCase();
